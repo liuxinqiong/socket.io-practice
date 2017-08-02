@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h3>ebus P408余票云端查询系统</h3>
+<div>
+    <h4>手机号码是先决条件</h4>
+    请输入手机号码：<input type="tel" id="telInput">
+</div>
+<div>
+    <h4>操作列表：</h4>
+    <div>
+        <button id="getCodeBtn">获取验证码</button>
+    </div>
+    <div>
+        请输入验证码：<input type="number" id="codeInput">
+        <button id="loginBtn">登录</button>
+    </div>
+    <div>
+        邮件提醒：<input type="email" id="emailInput">
+        <button id="searchBtn">查询余票</button>
+    </div>
+    <div>
+        <p>已查询次数：<span id="countSpan"></span>次</p>
+        <button id="searchCount">查询次数</button>
+        <button id="stopBtn">停止</button>
+    </div>
+</div>
+<script src="https://cdn.bootcss.com/socket.io/2.0.3/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script>
+    var socket = io('/ebus');
+    // 获取验证码与登录
+    $('#getCodeBtn').click(function () {
+        socket.emit('getCode', {Phone: $('#telInput').val()});
+    });
+    socket.on('code', function (data) {
+        console.log(data);
+        alert(data.returnInfo);
+    });
+    $('#loginBtn').click(function(){
+        socket.emit('login', {loginName: $('#telInput').val(),loginCode:$('#codeInput').val()});
+    });
+    socket.on('loginState',function (data) {
+        console.log(data);
+        alert(data.returnInfo);
+    });
+    // 开始刷票
+    $('#searchBtn').click(function () {
+        socket.emit('start', {Phone:$('#telInput').val(),Email: $('#emailInput').val()});
+    });
+    socket.on('searchState',function (data) {
+        console.log(data);
+        //alert(data.returnInfo);
+    });
+    // 查询已刷票次数
+    $('#searchCount').click(function () {
+        socket.emit('count',{Phone:$('#telInput').val()})
+    })
+    socket.on('countState',function (data) {
+        $('#countSpan').text(data.returnData.count);
+    });
+    // 停止
+    $('#stopBtn').click(function(){
+        socket.emit('stop',{Phone:$('#telInput').val()})
+    });
+    socket.on('stopState',function(data){
+        alert(data.returnInfo);
+    });
+
+</script>
+</body>
+</html>

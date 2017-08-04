@@ -15,20 +15,11 @@ if(!Object.values){
     }
 }
 
-function getOnlineList(){
-    var data=Object.values(users);
-    var onlineList=[];
-    for(var i=0;i<data.length;i++){
-        onlineList.push(data[i].userId);
-    }
-    return onlineList;
-}
-
-function getSocketByUserId(userId){
-    var data=Object.values(users);
-    for(var i=0;i<data.length;i++){
-        if(data[i].userId==userId){
-            return data[i].socketId;
+function deleteUserBySocketId(socketId){
+    for(var attr in users){
+        if(users[attr].socketId==socketId){
+            delete users[attr];
+            return;
         }
     }
 }
@@ -37,28 +28,28 @@ module.exports=function(io){
     var ioPos=io.of('/pos');
     ioPos.on('connection',function(socket){
         console.log('pos connected');
-        // 用户登录，缓存在线列表
+        // 用户登录，缓存在线列表 todo：同一个账号多处登录
         socket.on('loginPos',function (data) {
             console.log('pos loginPos');
-            users[socket.id]={
+            users[data.userId]={
                 userId:data.userId,
                 socketId:socket.id
             };
         });
 
         // 新用户连接，发布在线列表
-        ioPos.emit('onLineList',getOnlineList());
+        ioPos.emit('onLineList',Object.values(users));
 
         // 管理员才发布，获取在线列表
         socket.on('getOnlineListReq',function(){
             console.log('pos loginPos');
-            ioPos.emit('onLineList',getOnlineList());
+            ioPos.emit('onLineList',Object.values(users));
         });
 
         // 根据用户id，找到指定socket，然后发布请求
         socket.on('getPosByUserId',function(data){
             console.log('pos getPosByUserId');
-            var socketId=getSocketByUserId(data.userId);
+            var socketId=users[data.userId].socketId;
             if(socketId){
                 // 发布请求，监听响应
                 ioPos.sockets[socketId].emit('getPosReq');
@@ -101,11 +92,9 @@ module.exports=function(io){
 
         socket.on('disconnection',function(){
             // 删除离线用户
-            if(users[socket.id]){
-                delete users[socket.id];
-            }
+            deleteUserBySocketId(socket.id);
             // 发布最新在线列表，管理员才监听，因此全部广播
-            ioPos.emit('onLineList',getOnlineList());
+            ioPos.emit('onLineList',Object.values(users));
         });
     })
 }

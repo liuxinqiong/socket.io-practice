@@ -4,17 +4,6 @@
 
 var users={};
 
-if(!Object.values){
-    Object.values=function(obj){
-        var ary=[];
-        var keys=Object.keys(obj);
-        for(var i=0;i<keys.length;i++){
-            ary.push(obj[keys[i]]);
-        }
-        return ary;
-    }
-}
-
 function deleteUserBySocketId(socketId){
     for(var attr in users){
         if(users[attr].socketId==socketId){
@@ -38,20 +27,21 @@ module.exports=function(io){
         });
 
         // 新用户连接，发布在线列表
-        ioPos.emit('onLineList',Object.values(users));
+        ioPos.emit('onLineList',Object.keys(users));
 
         // 管理员才发布，获取在线列表
         socket.on('getOnlineListReq',function(){
             console.log('pos loginPos');
-            ioPos.emit('onLineList',Object.values(users));
+            ioPos.emit('onLineList',Object.keys(users));
         });
 
         // 根据用户id，找到指定socket，然后发布请求
         socket.on('getPosByUserId',function(data){
             console.log('pos getPosByUserId');
-            var socketId=users[data.userId].socketId;
-            if(socketId){
+            var user=users[data.userId];
+            if(user){
                 // 发布请求，监听响应
+                var socketId=user.socketId;
                 ioPos.sockets[socketId].emit('getPosReq');
                 ioPos.sockets[socketId].on('getPosRes',function (_data) {
                     // 定位权限未打开
@@ -94,7 +84,7 @@ module.exports=function(io){
             // 删除离线用户
             deleteUserBySocketId(socket.id);
             // 发布最新在线列表，管理员才监听，因此全部广播
-            ioPos.emit('onLineList',Object.values(users));
+            ioPos.emit('onLineList',Object.keys(users));
         });
     })
 }

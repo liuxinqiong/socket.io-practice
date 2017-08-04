@@ -31,13 +31,16 @@
         $('#messages').append($('<li>').text(msg));
     });
 
-    socket.on('some event',function(msg){
-        console.log(msg);
-    })
+    // 重复绑定，会响应多次
+    //for(var i=0;i<3;i++){
+        socket.on('some event',function(msg){
+            console.log(msg);
+        });
+    //}
 
     socket.on('new',function (msg) {
         console.log(msg);
-    })
+    });
 </script>
 </body>
 </html>

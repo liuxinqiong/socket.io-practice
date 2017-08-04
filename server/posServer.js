@@ -4,15 +4,6 @@
 
 var users={};
 
-function getOnlineList(){
-    var data=Object.values(users);
-    var onlineList=[];
-    for(var i=0;i<data.length;i++){
-        onlineList.push(data[i].userId);
-    }
-    return onlineList;
-}
-
 if(!Object.values){
     Object.values=function(obj){
         var ary=[];
@@ -22,6 +13,15 @@ if(!Object.values){
         }
         return ary;
     }
+}
+
+function getOnlineList(){
+    var data=Object.values(users);
+    var onlineList=[];
+    for(var i=0;i<data.length;i++){
+        onlineList.push(data[i].userId);
+    }
+    return onlineList;
 }
 
 function getSocketByUserId(userId){
@@ -63,17 +63,28 @@ module.exports=function(io){
                 // 发布请求，监听响应
                 ioPos.sockets[socketId].emit('getPosReq');
                 ioPos.sockets[socketId].on('getPosRes',function (_data) {
-                    // todo:定位权限未打开
-
-                    // 定位成功
-                    socket.emit('posResult', {
-                        resultCode: 0,
-                        resultInfo: '定位成功',
-                        resultData: {
-                            position: _data.position,
-                            userId:data.userId
-                        }
-                    });
+                    // 定位权限未打开
+                    if(_data.code===0){
+                        // 定位成功
+                        socket.emit('posResult', {
+                            resultCode: 0,
+                            resultInfo: '定位成功',
+                            resultData: {
+                                position: _data.position,
+                                userId:data.userId
+                            }
+                        });
+                    }else{
+                        // 定位失败，定位出错或定位功能未开启
+                        socket.emit('posResult', {
+                            resultCode: -2,
+                            resultInfo: '定位出错，用户定位功能可能未开启',
+                            resultData: {
+                                position: null,
+                                userId:data.userId
+                            }
+                        });
+                    }
                 });
             }else{
                 // 不存在
@@ -82,7 +93,7 @@ module.exports=function(io){
                     resultInfo:'用户不在线',
                     resultData:{
                         userId:data.userId,
-                        position: null,
+                        position: null
                     }
                 });
             }

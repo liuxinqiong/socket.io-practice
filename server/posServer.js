@@ -13,6 +13,17 @@ function getOnlineList(){
     return onlineList;
 }
 
+if(!Object.values){
+    Object.values=function(obj){
+        var ary=[];
+        var keys=Object.keys(obj);
+        for(var i=0;i<keys.length;i++){
+            ary.push(obj[keys[i]]);
+        }
+        return ary;
+    }
+}
+
 function getSocketByUserId(userId){
     var data=Object.values(users);
     for(var i=0;i<data.length;i++){

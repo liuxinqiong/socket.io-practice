@@ -93,6 +93,17 @@ module.exports=function(io){
             }
         });
 
+        // 用户切换账号，todo：sokcet本身自带断开方法
+        socket.on('logout',function (data) {
+            console.log('user logout');
+            // 删除
+            if(users[data.userId]){
+                delete users[data.userId];
+            }
+            // 发布最新列表
+            ioPos.emit('onLineList',Object.keys(users));
+        });
+        
         socket.on('disconnect',function(){
             console.log('disconnect');
             // 删除离线用户

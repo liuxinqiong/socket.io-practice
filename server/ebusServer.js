@@ -38,6 +38,13 @@ var p408={
  * }
  * */
 
+function sendEmails(email,content,subject){
+    var emails=email.split(';');
+    for(var i=0;i<emails.length;i++){
+        MailUtil.sendEmail(emails[i],content,subject);
+    }
+}
+
 module.exports=function(io){
     io.of('/ebus').on('connection',function (socket) {
         console.log('a user connected');
@@ -130,34 +137,35 @@ module.exports=function(io){
                             // 当天就不用累加日期了
                             i!==0&&day++;
                             if(price>0&&ticket>0){
-                                info[month+day]={
+                                info[month+day+'日']={
                                     date:month+day+'日',
                                     ticket:ticket
                                 };
                             }
                         }
                         users[msg.Phone].count++;
-                        if(ObjectUtil.isEmptyObject(info)) {
-                            // 无票，如果socket在，推送次数
-                            socket.emit('countState',{returnCode:0,returnInfo:'次数查询成功',returnData:{count:users[msg.Phone].count}});
-                        }else{
-                            // 关闭查询，推送次数，发送邮件
-                            clearInterval(users[msg.Phone].interval);
-                            socket.emit('countState',{returnCode:0,returnInfo:'次数查询成功',returnData:{count:users[msg.Phone].count}});
+                        if(!ObjectUtil.isEmptyObject(info)) {
+                            // 有票，关闭查询，发送邮件
+                            //clearInterval(users[msg.Phone].interval);
                             var toEmail=users[msg.Phone].email;
-                            MailUtil.sendEmail(toEmail,JSON.stringify(info)+'\n'+'本次查票到此结束，需要请购买完成后重新开启，本次共为您查询'+users[msg.Phone].count+'次','ebus p408有符合您的票啦');
-                            delete users[msg.Phone];
+                            sendEmails(toEmail,JSON.stringify(info)+'\n'+'有票啦，请尽快购买，否则会一直吵你，本次共为您查询'+users[msg.Phone].count+'次','ebus p408有符合您的票啦');
+                            // 总是错过，不关闭了
+                            //delete users[msg.Phone];
                         }
+                        // 如果socket在，推送次数
+                        socket.emit('countState',{returnCode:0,returnInfo:'次数查询成功',returnData:{count:users[msg.Phone].count}});
                     }else{
                         // 出错，可能是会话失效，直接关闭，并且邮件提醒
                         clearInterval(users[msg.Phone].interval);
                         var toEmail=users[msg.Phone].email;
-                        MailUtil.sendEmail(toEmail,'您可能在其他客户端登录，会话失效，云端刷票到此结束','ebus p408刷票停止啦');
+                        sendEmails(toEmail,'您可能在其他客户端登录，会话失效，云端刷票到此结束','ebus p408刷票停止啦');
                         delete users[msg.Phone];
                     }
                     socket.emit('searchState',data);
                 });
             },60000);
+            var toEmail=users[msg.Phone].email;
+            sendEmails(toEmail,'云端刷票开启成功，请不要在其他客户端登录，否则导致失效，当前频率1分钟','ebus p408刷票提醒你');
             socket.emit('searchState',{returnCode:0,returnInfo:'云端刷票开启成功，请不要在其他客户端登录，否则导致失效，当前频率1分钟'});
         })
 
@@ -166,11 +174,13 @@ module.exports=function(io){
                 socket.emit('stopState',{returnCode:-1,returnInfo:'停止云端刷票，手机号码是必须的'});
             }
             if(users[msg.Phone]){
+                var toEmail=users[msg.Phone].email;
                 // 关闭轮询
                 clearInterval(users[msg.Phone].interval);
                 // 删除用户
                 delete users[msg.Phone];
                 socket.emit('stopState',{returnCode:0,returnInfo:'停止云端刷票成功'});
+                sendEmails(toEmail,'人为停止云端刷票成功','ebus p408刷票提醒你');
             }else{
                 socket.emit('stopState',{returnCode:-1,returnInfo:'用户未开启云端刷票'});
             }

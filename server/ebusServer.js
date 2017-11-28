@@ -92,19 +92,19 @@ module.exports = function (io) {
         socket.on('start', function (msg) {
             console.log(msg);
             if (!msg.Phone) {
-                socket.emit('searchState', {returnCode: -1, returnInfo: '手机号码是必须的'});
+                socket.emit('startState', {returnCode: -1, returnInfo: '手机号码是必须的'});
                 return;
             }
             if (!msg.Email) {
-                socket.emit('searchState', {returnCode: -1, returnInfo: '邮箱是必须的'});
+                socket.emit('startState', {returnCode: -1, returnInfo: '邮箱是必须的'});
                 return;
             }
             if (!users[msg.Phone]) {
-                socket.emit('searchState', {returnCode: -1, returnInfo: '您还没有登录，请按照步骤来！'});
+                socket.emit('startState', {returnCode: -1, returnInfo: '您还没有登录，请按照步骤来！'});
                 return;
             }
             if (users[msg.Phone].interval) {
-                socket.emit('searchState', {returnCode: -1, returnInfo: '云端刷票已经开启成功，请不要重复开启'});
+                socket.emit('startState', {returnCode: -1, returnInfo: '云端刷票已经开启成功，请不要重复开启'});
                 return;
             }
             users[msg.Phone].email = msg.Email;
@@ -179,7 +179,7 @@ module.exports = function (io) {
             }, 60000);
             var toEmail = users[msg.Phone].email;
             sendEmails(toEmail, '云端刷票开启成功，请不要在其他客户端登录，否则导致失效，当前频率1分钟', 'ebus' + msg.lineId + '车次刷票提醒你');
-            socket.emit('searchState', {returnCode: 0, returnInfo: '云端刷票开启成功，请不要在其他客户端登录，否则导致失效，当前频率1分钟'});
+            socket.emit('startState', {returnCode: 0, returnInfo: '云端刷票开启成功，请不要在其他客户端登录，否则导致失效，当前频率1分钟'});
         });
 
         // 停止
@@ -194,7 +194,7 @@ module.exports = function (io) {
                 // 删除用户
                 delete users[msg.Phone];
                 socket.emit('stopState', {returnCode: 0, returnInfo: '停止云端刷票成功'});
-                sendEmails(toEmail, '人为停止云端刷票成功', 'ebus p408刷票提醒你');
+                sendEmails(toEmail, '人为停止云端刷票成功', 'ebus' + msg.lineId + '刷票提醒你');
             } else {
                 socket.emit('stopState', {returnCode: -1, returnInfo: '用户未开启云端刷票'});
             }

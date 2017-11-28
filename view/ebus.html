@@ -91,6 +91,10 @@
     });
     socket.on('searchState', function (data) {
         console.log(data);
+        //alert(data.returnInfo);
+    });
+    socket.on('startState', function (data) {
+        console.log(data);
         alert(data.returnInfo);
     });
     // 查询已刷票次数

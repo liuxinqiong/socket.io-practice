@@ -64,15 +64,12 @@
         var result = data.returnData;
         var html = '';
         for (var i = 0; i < result.length; i++) {
-            var temp = {
-                lineId: result[i].lineId,
-                vehTime: result[i].vehTime
-            };
+            var temp = result[i].lineId + '-' + result[i].vehTime;
             if (i == 0) {
                 // 默认选中第一个
-                html += '<input type="radio" name="line" value="' + JSON.stringify(temp) + '" checked/>' + '编号：' + result[i].lineId + '；发车时间：' + result[i].vehTime + '<br/>';
+                html += '<input type="radio" name="line" value="' + temp + '" checked/>' + '编号：' + result[i].lineId + '；发车时间：' + result[i].vehTime + '<br/>';
             } else {
-                html += '<input type="radio" name="line" value="' + JSON.stringify(temp) + '"/>' + '编号：' + result[i].lineId + '；发车时间：' + result[i].vehTime + '<br/>';
+                html += '<input type="radio" name="line" value="' + temp + '"/>' + '编号：' + result[i].lineId + '；发车时间：' + result[i].vehTime + '<br/>';
             }
         }
         $('#lineContainer').html(html);
@@ -80,16 +77,16 @@
     // 开始刷票
     $('#searchBtn').click(function () {
         var checked = $("input[name='line']:checked");
-        if(checked.length == 0){
+        if (checked.length == 0) {
             alert('请选择具体车次');
             return;
         }
-        var temp = JSON.parse(checked.val());
+        var temp = checked.val().split('-');
         socket.emit('start', {
             Phone: $('#telInput').val(),
             Email: $('#emailInput').val(),
-            lineId: temp.lineId,
-            vehTime: temp.vehTime
+            lineId: temp[0],
+            vehTime: temp.[1]
         });
     });
     socket.on('searchState', function (data) {

@@ -22,7 +22,7 @@ function MailUtil(){
 
 MailUtil.prototype.sendEmail=function (email,text,subject) {
     var mailOptions = {
-        from: '2478092995@qq.com', // 发送者
+        from: '"ebus刷票" <2478092995@qq.com>', // 发送者
         to: email, // 接受者,可以同时发送多个,以逗号隔开
         subject: subject, // 标题
         text: text, // 文本

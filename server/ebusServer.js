@@ -40,6 +40,10 @@ function sendEmails(email, content, subject) {
     }
 }
 
+/**
+ * 2018/4/9 今天给朋友用，发现接口全部返回为空，看来ebus系统肯定做了修改，看来需要重新fiddler抓包分析一下了！
+ * 太尴尬了，哈哈
+ */
 module.exports = function (io) {
     io.of('/ebus').on('connection', function (socket) {
 
@@ -49,10 +53,16 @@ module.exports = function (io) {
         socket.on('getCode', function (msg) {
             console.log(msg);
             if (users[msg.Phone]) {
-                socket.emit('code', {returnCode: -1, returnInfo: '云端已登录成功，请不要重复登录，否则导致会话失效'});
+                socket.emit('code', {
+                    returnCode: -1,
+                    returnInfo: '云端已登录成功，请不要重复登录，否则导致会话失效'
+                });
                 return;
             }
-            rest.post('http://slb.szebus.net/code/phone/login', {data: msg}).on('complete', function (data, response) {
+            rest.post('http://slb.szebus.net/code/phone/login', {
+                data: msg
+            }).on('complete', function (data, response) {
+                console.log(data);
                 socket.emit('code', JSON.parse(data));
             });
         });
@@ -61,10 +71,15 @@ module.exports = function (io) {
         socket.on('login', function (msg) {
             console.log(msg);
             if (users[msg.loginName]) {
-                socket.emit('loginState', {returnCode: -1, returnInfo: '云端已登录成功，请不要重复登录，否则导致会话失效'});
+                socket.emit('loginState', {
+                    returnCode: -1,
+                    returnInfo: '云端已登录成功，请不要重复登录，否则导致会话失效'
+                });
                 return;
             }
-            rest.post('http://slb.szebus.net/phone/login/new', {data: msg}).on('complete', function (data, response) {
+            rest.post('http://slb.szebus.net/phone/login/new', {
+                data: msg
+            }).on('complete', function (data, response) {
                 data = JSON.parse(data)
                 // 登录成功
                 if (data.returnCode == 500) {
@@ -83,7 +98,9 @@ module.exports = function (io) {
 
         // 查询
         socket.on('search', function (msg) {
-            rest.post('http://slb.szebus.net/bc/phone/data', {data: msg}).on('complete', function (data, response) {
+            rest.post('http://slb.szebus.net/bc/phone/data', {
+                data: msg
+            }).on('complete', function (data, response) {
                 socket.emit('searchResult', JSON.parse(data));
             });
         });
@@ -92,19 +109,31 @@ module.exports = function (io) {
         socket.on('start', function (msg) {
             console.log(msg);
             if (!msg.Phone) {
-                socket.emit('startState', {returnCode: -1, returnInfo: '手机号码是必须的'});
+                socket.emit('startState', {
+                    returnCode: -1,
+                    returnInfo: '手机号码是必须的'
+                });
                 return;
             }
             if (!msg.Email) {
-                socket.emit('startState', {returnCode: -1, returnInfo: '邮箱是必须的'});
+                socket.emit('startState', {
+                    returnCode: -1,
+                    returnInfo: '邮箱是必须的'
+                });
                 return;
             }
             if (!users[msg.Phone]) {
-                socket.emit('startState', {returnCode: -1, returnInfo: '您还没有登录，请按照步骤来！'});
+                socket.emit('startState', {
+                    returnCode: -1,
+                    returnInfo: '您还没有登录，请按照步骤来！'
+                });
                 return;
             }
             if (users[msg.Phone].interval) {
-                socket.emit('startState', {returnCode: -1, returnInfo: '云端刷票已经开启成功，请不要重复开启'});
+                socket.emit('startState', {
+                    returnCode: -1,
+                    returnInfo: '云端刷票已经开启成功，请不要重复开启'
+                });
                 return;
             }
             users[msg.Phone].email = msg.Email;
@@ -130,7 +159,9 @@ module.exports = function (io) {
                     endDate: endDate
                 }
                 // 云端刷票次数功能
-                rest.post('http://slb.szebus.net/bc/phone/surplus/ticket/new', {data: data}).on('complete', function (data, response) {
+                rest.post('http://slb.szebus.net/bc/phone/surplus/ticket/new', {
+                    data: data
+                }).on('complete', function (data, response) {
                     var data = JSON.parse(data);
                     if (data.returnCode == 500) {
                         // 进行数据分析，只提示未购买日的有票信息
@@ -165,7 +196,9 @@ module.exports = function (io) {
                         socket.emit('countState', {
                             returnCode: 0,
                             returnInfo: '次数查询成功',
-                            returnData: {count: users[msg.Phone].count}
+                            returnData: {
+                                count: users[msg.Phone].count
+                            }
                         });
                     } else {
                         // 出错，可能是会话失效，直接关闭，并且邮件提醒
@@ -179,13 +212,19 @@ module.exports = function (io) {
             }, 60000);
             var toEmail = users[msg.Phone].email;
             sendEmails(toEmail, '云端刷票开启成功，请不要在其他客户端登录，否则导致失效，当前频率1分钟', 'ebus' + msg.lineId + '车次刷票提醒你');
-            socket.emit('startState', {returnCode: 0, returnInfo: '云端刷票开启成功，请不要在其他客户端登录，否则导致失效，当前频率1分钟'});
+            socket.emit('startState', {
+                returnCode: 0,
+                returnInfo: '云端刷票开启成功，请不要在其他客户端登录，否则导致失效，当前频率1分钟'
+            });
         });
 
         // 停止
         socket.on('stop', function (msg) {
             if (!msg.Phone) {
-                socket.emit('stopState', {returnCode: -1, returnInfo: '停止云端刷票，手机号码是必须的'});
+                socket.emit('stopState', {
+                    returnCode: -1,
+                    returnInfo: '停止云端刷票，手机号码是必须的'
+                });
             }
             if (users[msg.Phone]) {
                 var toEmail = users[msg.Phone].email;
@@ -193,26 +232,43 @@ module.exports = function (io) {
                 clearInterval(users[msg.Phone].interval);
                 // 删除用户
                 delete users[msg.Phone];
-                socket.emit('stopState', {returnCode: 0, returnInfo: '停止云端刷票成功'});
+                socket.emit('stopState', {
+                    returnCode: 0,
+                    returnInfo: '停止云端刷票成功'
+                });
                 sendEmails(toEmail, '人为停止云端刷票成功', 'ebus' + msg.lineId + '刷票提醒你');
             } else {
-                socket.emit('stopState', {returnCode: -1, returnInfo: '用户未开启云端刷票'});
+                socket.emit('stopState', {
+                    returnCode: -1,
+                    returnInfo: '用户未开启云端刷票'
+                });
             }
         });
 
         // 统计
         socket.on('count', function (msg) {
             if (!msg.Phone) {
-                socket.emit('countState', {returnCode: -1, returnInfo: '查询云端刷票，手机号码是必须的'});
+                socket.emit('countState', {
+                    returnCode: -1,
+                    returnInfo: '查询云端刷票，手机号码是必须的'
+                });
             }
             if (users[msg.Phone]) {
                 socket.emit('countState', {
                     returnCode: 0,
                     returnInfo: '次数查询成功',
-                    returnData: {count: users[msg.Phone].count}
+                    returnData: {
+                        count: users[msg.Phone].count
+                    }
                 });
             } else {
-                socket.emit('countState', {returnCode: -1, returnInfo: '该号码并未开启云端查询', returnData: {count: -1}});
+                socket.emit('countState', {
+                    returnCode: -1,
+                    returnInfo: '该号码并未开启云端查询',
+                    returnData: {
+                        count: -1
+                    }
+                });
             }
         });
     });
